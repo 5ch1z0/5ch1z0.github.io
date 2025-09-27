@@ -1,6 +1,6 @@
 const links = {
-    "Github" = "https://github.com/5ch1z0",
-    "TryHackMe" = "https://tryhackme.com/p/5CH1Z0"
+    "Github": "https://github.com/5ch1z0",
+    "TryHackMe": "https://tryhackme.com/p/5CH1Z0"
 }
 
 
