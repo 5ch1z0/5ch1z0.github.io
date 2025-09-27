@@ -14,6 +14,7 @@ function main() {
         const a = document.createElement("a");
         a.innerText = key;
         a.setAttribute('href', value);
+        a.setAttribute('target', "_blank");
 
         item.appendChild(a);
         list.appendChild(item);
