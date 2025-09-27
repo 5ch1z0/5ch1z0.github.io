@@ -17,7 +17,12 @@ body {
     background-color: #010409;
     color: #f0f6fc;
     
-    display: flex;
-    align-items: center;
+    display: grid;
     justify-content: center;
+    grid-template-rows: 2rem auto;
+}
+
+#header h1 {
+    font-weight: 600;
+    font-size: 2rem;
 }
