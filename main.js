@@ -9,7 +9,7 @@ function main() {
     const htmlMain = document.querySelector("body > div#main");
 
     const list = htmlMain.querySelector("div#list");
-    for (const [key, value] of Obhect.entries(links)) {
+    for (const [key, value] of Object.entries(links)) {
         const item = document.createElement("div");
         const a = document.createElement("a");
         a.innerText = key;
