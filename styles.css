@@ -26,5 +26,8 @@ body {
     font-weight: 600;
     font-size: 2rem;
 }
-#header h1::before { content: "< " }
+#header h1::before { content: " < " }
 #header h1::after { content: " />" }
+#header h1::before, #header h1::after {
+    color: #4040ff;
+}
