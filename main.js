@@ -8,7 +8,7 @@ function main() {
     const htmlHeader = document.querySelector("body > div#header");
     const htmlMain = document.querySelector("body > div#main");
 
-    const list = htmlMain.querySelector("");
+    const list = htmlMain.querySelector("> div#list");
     for (const [key, value] of Obhect.entries(links)) {
         const item = document.createElement("div");
         const a = document.createElement("a");
