@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
+
+* {
+    padding: 0;
+    margin: 0;
+    
+    font-size: inherit;
+    font-style: none;
+    font-family: "Roboto Mono", monospace;
+    text-decoration: none;
+    color: inherit;
+
+    border: none;
+    background: none;
+}
+
+body {
+    background-color: #010409;
+    color: #f0f6fc;
+
+    width: 100vw;
+    height: 100vh;
+    
+    display: grid;
+    justify-content: center;
+    grid-template-rows: 4rem auto;
+}
+
+#header {
+    #title {
+        font-weight: 600;
+        font-size: 2rem;
+
+        &::after { content: " />"; }
+        &::before { content: "< "; }
+        &::before, &::after {
+            color: #4040ff;
+        }
+    }
+}
+
+#main {
+    #list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+
+        .list-item {
+            &::after { content: " ]"; }
+            &::before { content: "[ "; }
+            &::before, &::after {
+                font-weight: 600;
+                color: #4040ff;
+            }
+
+            &:hover {
+                font-weight: 600;;
+            }
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        font-size: 16px; /* A good default for mobile readability */
+    }
+
+    #header #title {
+        font-size: 1.5rem; /* Smaller font for the title on mobile */
+    }
+
+    #main #list {
+        gap: 0.75rem; /* Slightly reduced spacing between list items */
+    }
+}
